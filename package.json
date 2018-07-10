@@ -1,0 +1,29 @@
+{
+  "name": "socket-adapter",
+  "version": "1.0.0",
+  "description": "对于不支持WebSocket的浏览器，通常做法是在页面嵌入swf文件，通过js调用as3的方法，通过flash来进行通信，该项目对两种方式进行简单的封装",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lixiangfei/socket-adapter.git"
+  },
+  "keywords": [
+    "flashsocket",
+    "websocket"
+  ],
+  "author": "lixiangfei",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lixiangfei/socket-adapter/issues"
+  },
+  "homepage": "https://github.com/lixiangfei/socket-adapter#readme",
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "events": "^3.0.0",
+    "express": "^4.16.3",
+    "jsonp": "^0.2.1"
+  }
+}
