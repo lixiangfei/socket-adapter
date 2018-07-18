@@ -5,9 +5,11 @@ import swfObjEmbed from './swfobject';
 import socketSwfUrl from './FlashSocket.swf';
 export default class FlashSocket {
 
+    swfUrl = socketSwfUrl;
+    
     constructor(config) {
 
-        this.swfUrl = socketSwfUrl;
+        // this.swfUrl = socketSwfUrl;
         //生成嵌入swf的容器
         this.swfContainer = document.createElement('div');
 
