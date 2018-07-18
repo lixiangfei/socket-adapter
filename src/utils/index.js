@@ -13,3 +13,16 @@ export const Browser = {
     Maxthon: /Maxthon/gi.test(window.navigator.userAgent),
     Ipad: /ipad/gi.test(window.navigator.userAgent)
 }
+
+/**
+ * @static 替换换行符
+ * @param {String/Object} msg
+ * @returns {Object} 替换后的Object
+ */
+export function replaceLinkBreak(msg) {
+    if (typeof msg == "object") {
+        msg = JSON.stringify(msg);
+    }
+    msg = msg.replace(/\\r\\n/g, '');
+    return JSON.parse(msg);
+}

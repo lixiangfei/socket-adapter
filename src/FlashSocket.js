@@ -1,34 +1,33 @@
 /**
  * 负责在页面中嵌入 通信的swf
  */
-
 import swfObjEmbed from './swfobject';
-import socketSwfUrl from './Flash_Socket.swf';
+import socketSwfUrl from './FlashSocket.swf';
 export default class FlashSocket {
-    socketCfg = {};
-
-    swfUrl = socketSwfUrl;
-    //生成嵌入swf的容器
-    swfContainer = document.createElement('div');
-
-    swfWidth = '1px';
-    swfHeight = '1px';
-    swfContentId = 'FLASH_SOCKET_SWF';
-    swfObject = null;
 
     constructor(config) {
-            this.socketCfg = Object.assign({}, this.socketCfg, config);
 
-            this.swfContent.id = this.swfContentId;
-            this.swfContent.style.width = this.swfWidth;
-            this.swfContent.style.height = this.swfHeight;
+        this.swfUrl = socketSwfUrl;
+        //生成嵌入swf的容器
+        this.swfContainer = document.createElement('div');
 
-            document.body.appendChild(this.swfContainer);
+        this.swfWidth = '1px';
+        this.swfHeight = '1px';
+        this.swfContentId = 'FLASH_SOCKET_SWF';
+        this.swfObject = null;
+        this.socketCfg = Object.assign({}, config);
 
-            this._createSwfObject();
+        this.swfContent.id = this.swfContentId;
+        this.swfContent.style.width = this.swfWidth;
+        this.swfContent.style.height = this.swfHeight;
 
-        }
-        //https://blog.csdn.net/maco_liao/article/details/50945719
+        document.body.appendChild(this.swfContainer);
+
+        this._createSwfObject();
+
+    }
+
+    //https://blog.csdn.net/maco_liao/article/details/50945719
     _createSwfObject() {
         let swfVersionStr = '9.0.0',
             xiSwfUrlStr = 'expressInstall.swf',
@@ -59,6 +58,12 @@ export default class FlashSocket {
         );
     }
 
+    /**
+     * swf中有对应函数
+     * ExternalInterface.addCallback('socketFlash.Command', function(cmd, msg){
+     * 
+     * })
+     */
     get socketCommandFunc() {
         return this.swfObject["socketFlash.Command"];
     }
@@ -67,7 +72,7 @@ export default class FlashSocket {
         if (res.success) {
             this.swfObject = res.ref;
         } else {
-            window.alert('加载flash_socket失败');
+            console.log('加载flash_socket失败');
         }
     }
 

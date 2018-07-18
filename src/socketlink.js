@@ -1,15 +1,31 @@
+import {
+    eventEmitter,
+    events
+} from "./utils/events";
+
+import Message from './msg/AbstractMessage';
+import RC4 from './libs/rc4-es5';
+
+import SocketAdapter from './SocketAdapter';
+
 export default class SocketLink {
-    // 是否cfg.ready已经执行，只执行一次
-    _readyExecuted = false;
+
+
 
     constructor(config) {
+        this.eventEmitter = eventEmitter;
         this.cfg = Object.assign({
             // 默认websocket url
             url: '',
             // 是否使用wss，默认false
             useWss: false,
             // 初始化完成后执行
-            ready: () => {}
+            ready: () => {},
+            messageKey: (data) => {
+                return `msg-${data.sid}=${data.cid}`
+            },
+            //sock连接之后调用
+            open: () => {}
         }, config);
 
         this.cfg.url = (this.cfg.useWss ? 'wss://' : 'ws://') + this.cfg.url;
@@ -28,16 +44,12 @@ export default class SocketLink {
         });
     }
 
-    /**socket初始化完成，sock连接后调用 */
-    _ready(readyType) {
-
-    }
-
     /**
-     * sock连接成功
+     * sock连接成功，在sock中被调用
      */
     _open() {
-
+        console.log('链接sock');
+        this.cfg.open.bind(this)();
     }
 
     /** 
@@ -54,14 +66,22 @@ export default class SocketLink {
     _message(msgObject) {
         //包解析处理
         //或者抛出数据
+        var msgKey = this.cfg.messageKey(msgObject);
+        this.eventEmitter.emit(msgKey, msgObject);
     }
 
     send(msgObject) {
+        if (this.destroyed) {
+            console.log("destroyed");
+            return;
+        }
         //发送消息
+        console.log("sendMsg:" + msgObject);
+        this.SOCK.send(msgObject);
     }
 
     /**
-     * @method 提供给flash_socket调用，用于flash_socket通知页面消息
+     * @method 提供给flash_socket调用，方法调用说明使用FLASH-SOCK
      * @param {String} command类型
      * @param {String} msg消息体
      */
@@ -69,24 +89,12 @@ export default class SocketLink {
 
         // 第一次decode
         let msgStringDecoded = decodeURIComponent(msgString);
-
-
-        let flashSocketConnection = this.MTS.socketConnection;
+        let flashSocketConnection = this.SOCK.socketConnection;
 
         if (command == 'receive_data') {
-            // 这里需要decode多一次，因为flash那边encode了两次~~~
-            let msgStringDecodedTwice = decodeURIComponent(msgStringDecoded);
-
-            debug.ccLinkFlashMsg('receive_data', JSON.parse(msgStringDecodedTwice));
-
+            debug.ccLinkFlashMsg('receive_data', JSON.parse(msgStringDecoded));
             flashSocketConnection.onmessage(msgStringDecodedTwice);
         } else {
-
-            // 因为已经启用roomApi.player.msg，不打印出来
-            if (command != 'roomApi.player.msg') {
-                debug.ccLinkFlashMsg(command);
-            }
-
             if (command == 'socket_flash_ready') {
                 flashSocketConnection.connectServer();
             } else if (command == 'socket_connect_success') {
@@ -102,27 +110,41 @@ export default class SocketLink {
      * @method 格式化收到的消息为JSON格式
      * @param {Object} rawMessage 收到的消息体
      * @returns {Object} 格式化后的消息体，json
-     * @description native_socket模式下收到的消息为ArrayBuffer
+     * @description websocket模式下收到的消息为ArrayBuffer
      * @description flash_socket模式下为JSON（stringified）
      */
     _parseMsg4Client(rawMessage) {
-        // 区分是原生socket还是flashsocket，原生socket需要转换，flashsocket直接将rawMessage替换一下换行符即可
+        // 区分是原生socket还是flashsocket，原生socket需要转换
         if (this.SOCK.socketType == 'native_socket') {
-            // 将 ArrayBuffer 转为 Uint8Array
-            let msgArrayUint8Array = new Uint8Array(rawMessage);
 
-            // 解密
-            if (this._rc4Key.recv) {
-                msgArrayUint8Array = this._rc4Key.recv.encrypt(msgArrayUint8Array);
-            }
-
-            // 将buffer(Uint8Array)转为前端可读
-            return Message.unpack(msgArrayUint8Array).format('json');
         }
-
-        return Message.replaceLinkBreak(rawMessage);
     }
+
+    /**
+     * 持续监听消息
+     * @param {*} msgKeyData 用于事件拼接 
+     * @param {*} msgHandler 
+     */
+    onMessage(msgKeyData, msgHandler) {
+        let msgKey = this.cfg.messageKey(msgKeyData);
+        this.eventEmitter.on(msgKey, msgHandler);
+    }
+
+    /**
+     * 监听消息一次
+     * @param {*} msgKeyData 
+     * @param {*} msgHandler 
+     */
+    onMessageOnce(msgKeyData, msgHandler) {
+        let msgKey = this.cfg.messageKey(msgKeyData);
+        this.eventEmitter.once(msgKey, msgHandler);
+    }
+
     destroy() {
         this.SOCK.destroy();
+    }
+
+    get destroyed() {
+        return this.SOCK.destroyed;
     }
 }

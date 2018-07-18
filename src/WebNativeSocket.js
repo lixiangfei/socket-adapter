@@ -1,7 +1,6 @@
 /**
  * WebSocket
  */
-
 export default class WebNativeSocket {
     /**
      * url:socket链接地址
@@ -9,21 +8,21 @@ export default class WebNativeSocket {
      * onmessage{func}--> socket onmessage处理
      * onclose{func} --》socket onclose处理
      */
-    socketCfg = {};
+
 
     constructor(config) {
-        this.socketCfg = Object.assign({}, this.socketCfg, config);
+        this.socketCfg = Object.assign({}, config);
 
         return this.connect();
     }
 
     connect() {
         var ws = new WebSocket(this.socketCfg.url);
-        ws.binaryType = 'arraybuffer'; //Note 不然blob数据无法解析
+        ws.binaryType = 'arraybuffer'; //Note:显示指定收到的是arraybuffer
 
         ws.onopen = () => this.socketCfg.onopen();
 
-        ws.onmessage = msg => this.socketCfg.onmessage(msg);
+        ws.onmessage = evt => this.socketCfg.onmessage(evt.data);
 
         ws.onclose = () => this.socketCfg.onclose();
 
